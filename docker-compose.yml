@@ -32,11 +32,10 @@ services:
       dockerfile: Dockerfile
     container_name: phd-config-server
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: file:///config-repo
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: https://github.com/youceyf11/Phd-Tracking-Portal-config-repo.git
       SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: main
-    volumes:
-      - ./config-repo:/config-repo:rw
+      SPRING_CLOUD_CONFIG_SERVER_GIT_SEARCH_PATHS: config-repo
     ports:
       - "8888:8888"
     networks:
@@ -56,10 +55,9 @@ services:
       dockerfile: Dockerfile
     container_name: phd-eureka-server
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       EUREKA_INSTANCE_HOSTNAME: eureka-server
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     ports:
       - "8761:8761"
     networks:
@@ -81,11 +79,10 @@ services:
       dockerfile: Dockerfile
     container_name: phd-api-gateway
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-      EUREKA_INSTANCE_HOSTNAME: api-gateway
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
+      EUREKA_INSTANCE_HOSTNAME: api-gateway
     ports:
       - "8080:8080"
     networks:
@@ -109,9 +106,8 @@ services:
       dockerfile: Dockerfile
     container_name: phd-user-service
     environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
-      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
-      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
       EUREKA_INSTANCE_HOSTNAME: user-service
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-phd_tracking}
