@@ -33,6 +33,7 @@ services:
     container_name: phd-config-server
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8888
       SPRING_CLOUD_CONFIG_SERVER_GIT_URI: https://github.com/youceyf11/Phd-Tracking-Portal-config-repo.git
       SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: main
       SPRING_CLOUD_CONFIG_SERVER_GIT_SEARCH_PATHS: config-repo
@@ -45,7 +46,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 10
-      start_period: 40s
+      start_period: 60s
     restart: unless-stopped
 
   # === Eureka Server ===
@@ -80,9 +81,10 @@ services:
     container_name: phd-api-gateway
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       EUREKA_INSTANCE_HOSTNAME: api-gateway
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     ports:
       - "8080:8080"
     networks:
@@ -107,7 +109,7 @@ services:
     container_name: phd-user-service
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
       EUREKA_INSTANCE_HOSTNAME: user-service
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-phd_tracking}
