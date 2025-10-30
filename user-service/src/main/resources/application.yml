@@ -2,39 +2,4 @@ spring:
   application:
     name: user-service
   config:
-    import: configserver:http://config-server:8888/
-
-  datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/userdb}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-    open-in-view: false
-
-server:
-  port: 8081
-
-# JWT
-jwt:
-  secret: ${JWT_SECRET:tRomhJ1bWYx/2GRhM3gXFcH4MO48su12vBaEhYU0dG+EWoEXJb2uIh4i5WqTI2FCRiyCuuq2yT/CRL+0Oh2Ehw==}
-  expiration: ${JWT_EXPIRATION:86400000}
-
-eureka:
-  client:
-    enabled: true
-    service-url:
-        defaultZone: http://eureka-server:8761/eureka/
-
-logging:
-  level:
-    root: INFO
-    com.devbuild: DEBUG
-    org.hibernate.SQL: DEBUG
+    import: configserver:http://localhost:8888/
