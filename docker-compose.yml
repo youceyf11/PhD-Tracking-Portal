@@ -57,7 +57,7 @@ services:
     container_name: phd-eureka-server
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8888
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
       EUREKA_INSTANCE_HOSTNAME: eureka-server
     ports:
       - "8761:8761"
@@ -112,9 +112,16 @@ services:
       SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
       EUREKA_INSTANCE_HOSTNAME: user-service
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-phd_tracking}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/phd_tracking
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      JWT_SECRET: tRomhJ1bWYx/2GRhM3gXFcH4MO48su12vBaEhYU0dG+EWoEXJb2uIh4i5WqTI2FCRiyCuuq2yT/CRL+0Oh2Ehw==
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
+
+    env_file:
+      - .env
+
     ports:
       - "8081:8081"
     networks:
@@ -128,8 +135,8 @@ services:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
     restart: unless-stopped
