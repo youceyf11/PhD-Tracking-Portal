@@ -57,7 +57,8 @@ services:
     container_name: phd-eureka-server
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      CONFIG_SERVER_URI: http://config-server:8888
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8888/"
       EUREKA_INSTANCE_HOSTNAME: eureka-server
     ports:
       - "8761:8761"
@@ -81,7 +82,8 @@ services:
     container_name: phd-api-gateway
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      CONFIG_SERVER_URI: http://config-server:8888
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8888/"
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       EUREKA_INSTANCE_HOSTNAME: api-gateway
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
@@ -109,7 +111,8 @@ services:
     container_name: phd-user-service
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      CONFIG_SERVER_URI: http://config-server:8888
+      SPRING_CONFIG_IMPORT: "configserver:http://config-server:8888/"
       EUREKA_INSTANCE_HOSTNAME: user-service
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/phd_tracking
