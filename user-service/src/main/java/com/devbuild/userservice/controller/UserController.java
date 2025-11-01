@@ -1,5 +1,7 @@
 package com.devbuild.userservice.controller;
 
+import com.devbuild.userservice.dto.LoginRequest;
+import com.devbuild.userservice.dto.UpdateProfileRequest;
 import com.devbuild.userservice.dto.UserRequest;
 import com.devbuild.userservice.dto.UserResponse;
 import com.devbuild.userservice.entity.User;
@@ -10,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -70,6 +73,22 @@ public class UserController {
     public ResponseEntity<Void> desactivateUser(@PathVariable Long id) {
         userService.desactivateUser(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/current")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponse> updateOwnProfile(
+            Authentication authentication,
+            @Valid @RequestBody UpdateProfileRequest request) {
+
+        String email = authentication.getName();
+        User currentUser = userService.getUserEmail(email);
+
+        currentUser.setNom(request.getNom());
+        currentUser.setPrenom(request.getPrenom());
+
+        User updatedUser = userService.updateUser(currentUser);
+        return ResponseEntity.ok(UserResponse.fromEntity(updatedUser));
     }
 
 }

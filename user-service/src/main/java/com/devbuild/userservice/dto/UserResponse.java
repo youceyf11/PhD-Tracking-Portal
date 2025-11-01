@@ -18,11 +18,12 @@ import java.time.LocalDateTime;
 public class UserResponse {
 
     private Long id;
+    private String token;
     private String email;
     private String nom;
     private String prenom;
     private Role role;
-    private LocalDate dateCreation;
+    private LocalDateTime dateCreation;
     private Boolean active;
     private LocalDateTime lastLogin;
 
@@ -35,7 +36,7 @@ public class UserResponse {
                 .prenom(user.getPrenom())
                 .role(user.getRole())
                 .dateCreation(user.getDateCreation())
-                .active(user.getActive())
+                .active(user.isEnabled())
                 .lastLogin(user.getLastLogin())
                 .build();
     }

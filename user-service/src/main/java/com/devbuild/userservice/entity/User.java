@@ -60,7 +60,7 @@ public class User implements UserDetails {
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
-    private LocalDate dateCreation;
+    private LocalDateTime dateCreation;
 
     @Column(nullable = false)
     @Builder.Default

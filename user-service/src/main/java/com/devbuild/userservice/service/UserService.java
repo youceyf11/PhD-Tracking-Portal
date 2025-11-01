@@ -5,6 +5,7 @@ import com.devbuild.userservice.entity.User;
 import com.devbuild.userservice.enums.Role;
 import com.devbuild.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -20,6 +21,7 @@ import java.util.List;
 @Transactional
 public class UserService {
 
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
@@ -31,7 +33,7 @@ public class UserService {
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-        user.setDateCreation(LocalDate.now());
+        user.setDateCreation(LocalDateTime.now());
 
         if (user.getRole() == null) {
             user.setRole(Role.DOCTORANT);
@@ -89,5 +91,15 @@ public class UserService {
             userRepository.save(user);
         });
    }
+
+    public User updateUser(User user) {
+        User existingUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + user.getId()));
+
+        existingUser.setNom(user.getNom());
+        existingUser.setPrenom(user.getPrenom());
+
+        return userRepository.save(existingUser);
+    }
 
 }

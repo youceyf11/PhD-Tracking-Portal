@@ -55,12 +55,12 @@ services:
     container_name: phd-eureka-server
     environment:
       SPRING_PROFILES_ACTIVE: docker
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
       EUREKA_INSTANCE_HOSTNAME: eureka-server
       LOGGING_LEVEL_ROOT: DEBUG
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK: DEBUG
       LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_CONFIG: TRACE
       SPRING_OUTPUT_ANSI_ENABLED: ALWAYS
-      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
     ports:
       - "8761:8761"
     networks:
