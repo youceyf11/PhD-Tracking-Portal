@@ -1,7 +1,6 @@
 package com.devbuild.userservice.controller;
 
 import com.devbuild.userservice.dto.LoginRequest;
-import com.devbuild.userservice.dto.UserRequest;
 import com.devbuild.userservice.dto.UserResponse;
 import com.devbuild.userservice.entity.User;
 import com.devbuild.userservice.service.JwtService;
@@ -17,7 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
 

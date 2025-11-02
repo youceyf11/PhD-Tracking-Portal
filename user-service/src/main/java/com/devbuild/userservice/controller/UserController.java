@@ -1,6 +1,5 @@
 package com.devbuild.userservice.controller;
 
-import com.devbuild.userservice.dto.LoginRequest;
 import com.devbuild.userservice.dto.UpdateProfileRequest;
 import com.devbuild.userservice.dto.UserRequest;
 import com.devbuild.userservice.dto.UserResponse;
@@ -21,7 +20,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;

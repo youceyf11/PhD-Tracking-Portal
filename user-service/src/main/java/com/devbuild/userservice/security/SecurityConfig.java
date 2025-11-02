@@ -37,12 +37,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health","/actuator/info").permitAll()
                         .requestMatchers("/eureka/**").permitAll()
-                        .requestMatchers("/users/register").permitAll()
-                        .requestMatchers("/auth/login").permitAll()
-                        .requestMatchers("/users/current").authenticated()
-                        .requestMatchers("/users/{id}/role").hasRole("ADMIN")
-                        .requestMatchers("/users/{id}/desactivate").hasRole("ADMIN")
-                        .requestMatchers("/users", "/users/{email}").hasAnyRole("ADMIN", "DIRECTEUR")
+                        .requestMatchers("/api/users/register").permitAll()
+                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/users/current").authenticated()
+                        .requestMatchers("/api/users/{id}/role").hasRole("ADMIN")
+                        .requestMatchers("/api/users/{id}/desactivate").hasRole("ADMIN")
+                        .requestMatchers("/api/users", "/api/users/{email}").hasAnyRole("ADMIN", "DIRECTEUR")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception
