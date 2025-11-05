@@ -58,6 +58,19 @@ public class Campagne {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
     /*
     Vérifie si la campagne est active, que la date actuelle est après la date d’ouverture
      et avant la date de fermeture.

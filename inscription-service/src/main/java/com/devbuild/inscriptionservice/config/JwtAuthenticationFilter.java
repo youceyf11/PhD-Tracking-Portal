@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 @Component
 @Slf4j
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
     @Value("${jwt.secret}")
     private String jwtSecret;
 
@@ -49,15 +50,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         .parseSignedClaims(token)
                         .getPayload();
 
-                // Extraire les informations du token
+                // Extraire userId (maintenant String dans le JWT)
                 String userId = claims.get("userId", String.class);
-                String email = claims.getSubject(); // ou claims.get("email", String.class)
+
+                // Extraire email
+                String email = claims.getSubject();
+
+                // Extraire roles (maintenant List<String> dans le JWT)
+                @SuppressWarnings("unchecked")
                 List<String> roles = claims.get("roles", List.class);
 
-                if (userId != null && roles != null) {
+                if (userId != null && roles != null && !roles.isEmpty()) {
                     // Convertir les rôles en authorities Spring Security
                     List<SimpleGrantedAuthority> authorities = roles.stream()
-                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                            .map(role -> {
+                                // Ajouter "ROLE_" si pas déjà présent
+                                String roleStr = role.startsWith("ROLE_") ? role : "ROLE_" + role;
+                                return new SimpleGrantedAuthority(roleStr);
+                            })
                             .collect(Collectors.toList());
 
                     // Créer l'authentication avec userId comme principal
@@ -69,12 +79,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     // Définir l'authentification dans le SecurityContext
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                    log.debug("JWT validated for user: {} with roles: {}", userId, roles);
+                    log.debug("JWT validated successfully - User: {} | Email: {} | Roles: {}",
+                            userId, email, roles);
+                } else {
+                    log.warn("JWT validation failed - Missing required claims: userId={}, roles={}",
+                            userId, roles);
                 }
             }
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            log.error("JWT token is expired: {}", e.getMessage());
+        } catch (io.jsonwebtoken.security.SignatureException e) {
+            log.error("JWT signature validation failed: {}", e.getMessage());
+        } catch (io.jsonwebtoken.MalformedJwtException e) {
+            log.error("JWT token is malformed: {}", e.getMessage());
         } catch (Exception e) {
             log.error("Cannot validate JWT token: {}", e.getMessage());
-            // Ne pas bloquer la requête, laisser Spring Security gérer l'accès refusé
         }
 
         filterChain.doFilter(request, response);

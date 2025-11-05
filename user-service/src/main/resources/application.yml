@@ -1,5 +1,21 @@
 spring:
   application:
     name: user-service
-  config:
-    import: "configserver:http://localhost:8888"
+  cloud:
+    config:
+      fail-fast: true
+      request:
+        connect-timeout: 10000
+        read-timeout: 10000
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+

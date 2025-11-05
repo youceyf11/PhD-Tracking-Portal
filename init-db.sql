@@ -1,0 +1,1 @@
+CREATE DATABASE inscription_db;

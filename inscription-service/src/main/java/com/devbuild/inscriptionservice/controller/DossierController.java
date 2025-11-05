@@ -7,7 +7,6 @@ import com.devbuild.inscriptionservice.domain.dto.response.DossierResponse;
 import com.devbuild.inscriptionservice.domain.enums.TypeDocument;
 import com.devbuild.inscriptionservice.service.DossierService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -35,10 +34,10 @@ public class DossierController {
     @PreAuthorize("hasRole('DOCTORANT')")
     public ResponseEntity<ApiResponse<DossierResponse>> submitDossier(
             @RequestPart("dossier") String dossierJson,
-            @RequestPart(value = "diplome", required = false) MultipartFile diplome,
-            @RequestPart(value = "cv", required = false) MultipartFile cv,
-            @RequestPart(value = "lettreMotivation", required = false) MultipartFile lettreMotivation,
-            @RequestPart(value = "attestation", required = false) MultipartFile attestation,
+            @RequestPart(value = "diplome") MultipartFile diplome,
+            @RequestPart(value = "cv") MultipartFile cv,
+            @RequestPart(value = "lettreMotivation") MultipartFile lettreMotivation,
+            @RequestPart(value = "attestation") MultipartFile attestation,
             @RequestPart(value = "autre", required = false) MultipartFile autre,
             Authentication authentication) {
 
@@ -50,10 +49,10 @@ public class DossierController {
 
             // Map files to TypeDocument
             Map<TypeDocument, MultipartFile> files = new HashMap<>();
-            if (diplome != null) files.put(TypeDocument.DIPLOME, diplome);
-            if (cv != null) files.put(TypeDocument.CV, cv);
-            if (lettreMotivation != null) files.put(TypeDocument.LETTRE_MOTIVATION, lettreMotivation);
-            if (attestation != null) files.put(TypeDocument.ATTESTATION, attestation);
+            files.put(TypeDocument.DIPLOME, diplome);
+            files.put(TypeDocument.CV, cv);
+            files.put(TypeDocument.LETTRE_MOTIVATION, lettreMotivation);
+            files.put(TypeDocument.ATTESTATION, attestation);
             if (autre != null) files.put(TypeDocument.AUTRE, autre);
 
             DossierResponse response = dossierService.submitDossier(request, files, doctorantId);

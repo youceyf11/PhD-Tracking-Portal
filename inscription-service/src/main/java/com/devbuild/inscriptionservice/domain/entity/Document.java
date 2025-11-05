@@ -49,6 +49,13 @@ public class Document {
     @Column(nullable = false, updatable = false)
     private LocalDateTime uploadedAt;
 
+    @PrePersist
+    protected void onCreate() {
+        if (uploadedAt == null) {
+            uploadedAt = LocalDateTime.now();
+        }
+    }
+
 
     public String getExtension() {
         int lastDot = nomFichier.lastIndexOf('.');

@@ -4,6 +4,8 @@ networks:
 
 volumes:
   postgres-data:
+  zookeeper-data:
+  config-server-git-cache:
 
 services:
   postgres:
@@ -17,6 +19,9 @@ services:
       - "5432:5432"
     networks:
       - phd-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -30,16 +35,20 @@ services:
     environment:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+    ports:
+      - "2181:2181"
     volumes:
       - zookeeper-data:/var/lib/zookeeper/data
     networks:
       - phd-network
     healthcheck:
-      test: [ "CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok" ]
+      test: [ "CMD-SHELL", "echo srvr | nc localhost 2181 | grep Mode" ]
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: unless-stopped
+      start_period: 30s
+    restart: always
 
 
   kafka:
@@ -72,31 +81,37 @@ services:
     build:
       context: ./config-server
       dockerfile: Dockerfile
-    container_name: phd-config-server
+    container_name: config-server
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SERVER_PORT: 8888
       SPRING_CLOUD_CONFIG_SERVER_GIT_URI: https://github.com/youceyf11/Phd-Tracking-Portal-config-repo.git
       SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: main
       SPRING_CLOUD_CONFIG_SERVER_GIT_SEARCH_PATHS: config-repo
+      SPRING_CLOUD_CONFIG_SERVER_GIT_CLONE_ON_START: "true"
+      SPRING_CLOUD_CONFIG_SERVER_GIT_FORCE_PULL: "true"
+      SPRING_CLOUD_CONFIG_SERVER_GIT_TIMEOUT: 180
+      SPRING_CLOUD_CONFIG_SERVER_GIT_BASEDIR: /config-repo-cache
     ports:
       - "8888:8888"
     networks:
       - phd-network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8888/actuator/health || exit 1"]
-      interval: 15s
-      timeout: 5s
+      interval: 10s
+      timeout: 10s
       retries: 10
-      start_period: 60s
+      start_period: 300s
     restart: unless-stopped
+    volumes:
+      - config-server-git-cache:/config-repo-cache
 
   # === Eureka Server ===
   eureka-server:
     build:
       context: ./eureka-server
       dockerfile: Dockerfile
-    container_name: phd-eureka-server
+    container_name: eureka-server
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
@@ -124,7 +139,7 @@ services:
     build:
       context: ./api-gateway
       dockerfile: Dockerfile
-    container_name: phd-api-gateway
+    container_name: api-gateway
     environment:
       SPRING_PROFILES_ACTIVE: docker
       EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
@@ -152,7 +167,7 @@ services:
     build:
       context: ./user-service
       dockerfile: Dockerfile
-    container_name: phd-user-service
+    container_name: user-service
     environment:
       SPRING_PROFILES_ACTIVE: docker
       EUREKA_INSTANCE_HOSTNAME: user-service
@@ -161,13 +176,14 @@ services:
       SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      JWT_SECRET: tRomhJ1bWYx/2GRhM3gXFcH4MO48su12vBaEhYU0dG+EWoEXJb2uIh4i5WqTI2FCRiyCuuq2yT/CRL+0Oh2Ehw==
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
-
+      SPRING_CLOUD_CONFIG_FAIL_FAST: "false"
+      SPRING_CLOUD_CONFIG_REQUEST_READ_TIMEOUT: 60000  # 60 seconds
+      SPRING_CLOUD_CONFIG_REQUEST_CONNECT_TIMEOUT: 10000  # 10 seconds
     env_file:
       - .env
-
     ports:
       - "8081:8081"
     networks:
@@ -179,12 +195,14 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1"]
       interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 120s
+      timeout: 20s
+      retries: 10
+      start_period: 300s
     restart: unless-stopped
 
 
@@ -192,7 +210,7 @@ services:
     build:
       context: ./inscription-service
       dockerfile: Dockerfile
-    container_name: phd-inscription-service
+    container_name: inscription-service
     environment:
       SPRING_PROFILES_ACTIVE: docker
       EUREKA_INSTANCE_HOSTNAME: inscription-service
@@ -201,13 +219,14 @@ services:
       SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      JWT_SECRET: tRomhJ1bWYx/2GRhM3gXFcH4MO48su12vBaEhYU0dG+EWoEXJb2uIh4i5WqTI2FCRiyCuuq2yT/CRL+0Oh2Ehw==
+      JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
       JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
-
+      SPRING_CLOUD_CONFIG_FAIL_FAST: "false"
+      SPRING_CLOUD_CONFIG_REQUEST_READ_TIMEOUT: 60000  # 60 seconds
+      SPRING_CLOUD_CONFIG_REQUEST_CONNECT_TIMEOUT: 10000  # 10 seconds
     env_file:
       - .env
-
     ports:
       - "8082:8082"
     networks:

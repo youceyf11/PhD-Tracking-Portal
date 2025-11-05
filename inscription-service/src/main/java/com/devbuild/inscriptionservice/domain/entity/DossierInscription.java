@@ -89,6 +89,18 @@ public class DossierInscription {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
     // Returns true if more than 3 years have passed since the initial registration date.
     public boolean isDepasseDureeInitiale() {
         return ChronoUnit.YEARS.between(initialInscriptionDate, LocalDateTime.now()) > 3;
