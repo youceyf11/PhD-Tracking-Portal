@@ -15,7 +15,6 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class DossierSubmissionRequest {
 
     @NotNull(message = "L'ID de la campagne est obligatoire")
@@ -31,10 +30,11 @@ public class DossierSubmissionRequest {
     @Size(max = 500, message = "La collaboration ne peut pas dépasser 500 caractères")
     private String collaboration;
 
-    // Map of TypeDocument to file identifier (will be handled with MultipartFile separately)
     private Map<TypeDocument, String> documentsTypes;
 
-    // For reenrollment
     private Boolean isReenrollment;
+
     private Long previousDossierId;
+
+    private String derogation;
 }

@@ -1,2 +1,8 @@
-/mvnw text eol=lf
+# Normalisation par défaut
+* text=auto
+
+# Windows shell wrappers doivent rester CRLF
 *.cmd text eol=crlf
+
+# Scripts shell Unix en LF
+*.sh text eol=lf

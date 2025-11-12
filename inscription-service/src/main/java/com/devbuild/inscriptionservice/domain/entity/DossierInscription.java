@@ -89,6 +89,10 @@ public class DossierInscription {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
+
+    @Column(columnDefinition = "TEXT")
+    private String derogation;
+
     @PrePersist
     protected void onCreate() {
         if (createdAt == null) {

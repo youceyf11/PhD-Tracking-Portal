@@ -56,7 +56,6 @@ public class Document {
         }
     }
 
-
     public String getExtension() {
         int lastDot = nomFichier.lastIndexOf('.');
         return lastDot > 0 ? nomFichier.substring(lastDot + 1).toLowerCase() : "";

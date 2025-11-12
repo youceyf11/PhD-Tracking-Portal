@@ -5,13 +5,10 @@ import com.devbuild.userservice.entity.User;
 import com.devbuild.userservice.enums.Role;
 import com.devbuild.userservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -101,5 +98,11 @@ public class UserService {
 
         return userRepository.save(existingUser);
     }
+
+    @Transactional( readOnly = true)
+    public User getUserById(Long id) {
+        return userRepository.findById(id).orElse(null);
+    }
+
 
 }

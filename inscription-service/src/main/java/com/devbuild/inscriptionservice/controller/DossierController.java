@@ -7,6 +7,7 @@ import com.devbuild.inscriptionservice.domain.dto.response.DossierResponse;
 import com.devbuild.inscriptionservice.domain.enums.TypeDocument;
 import com.devbuild.inscriptionservice.service.DossierService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -16,6 +17,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import java.util.HashMap;
 import java.util.List;
@@ -34,12 +36,13 @@ public class DossierController {
     @PreAuthorize("hasRole('DOCTORANT')")
     public ResponseEntity<ApiResponse<DossierResponse>> submitDossier(
             @RequestPart("dossier") String dossierJson,
-            @RequestPart(value = "diplome") MultipartFile diplome,
-            @RequestPart(value = "cv") MultipartFile cv,
-            @RequestPart(value = "lettreMotivation") MultipartFile lettreMotivation,
-            @RequestPart(value = "attestation") MultipartFile attestation,
+            @RequestPart(value = "diplome", required = false) MultipartFile diplome,
+            @RequestPart(value = "cv", required = false) MultipartFile cv,
+            @RequestPart(value = "lettreMotivation", required = false) MultipartFile lettreMotivation,
+            @RequestPart(value = "attestation", required = false) MultipartFile attestation,
             @RequestPart(value = "autre", required = false) MultipartFile autre,
-            Authentication authentication) {
+            Authentication authentication,
+            @RequestHeader("Authorization") String authHeader) {
 
         try {
             Long doctorantId = Long.parseLong(authentication.getName());
@@ -49,13 +52,14 @@ public class DossierController {
 
             // Map files to TypeDocument
             Map<TypeDocument, MultipartFile> files = new HashMap<>();
-            files.put(TypeDocument.DIPLOME, diplome);
-            files.put(TypeDocument.CV, cv);
-            files.put(TypeDocument.LETTRE_MOTIVATION, lettreMotivation);
-            files.put(TypeDocument.ATTESTATION, attestation);
+            if (diplome != null) files.put(TypeDocument.DIPLOME, diplome);
+            if (cv != null) files.put(TypeDocument.CV, cv);
+            if (lettreMotivation != null) files.put(TypeDocument.LETTRE_MOTIVATION, lettreMotivation);
+            if (attestation != null) files.put(TypeDocument.ATTESTATION, attestation);
             if (autre != null) files.put(TypeDocument.AUTRE, autre);
 
-            DossierResponse response = dossierService.submitDossier(request, files, doctorantId);
+            String token= authHeader.substring((7));
+            DossierResponse response = dossierService.submitDossier(request, files, doctorantId, token);
 
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Dossier soumis avec succès", response));

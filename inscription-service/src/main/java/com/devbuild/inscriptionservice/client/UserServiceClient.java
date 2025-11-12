@@ -1,18 +1,15 @@
 package com.devbuild.inscriptionservice.client;
 
+import com.devbuild.inscriptionservice.domain.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
-import java.util.Map;
-
-/**
- * Client pour communiquer avec le user-service
- * Utilisé pour récupérer des informations sur les utilisateurs (doctorant, directeur)
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -24,87 +21,101 @@ public class UserServiceClient {
     private final RestClient restClient;
 
     /**
-     * Récupère les informations d'un utilisateur par son ID
-     * @param userId ID de l'utilisateur
-     * @param authToken Token JWT pour l'authentification
-     * @return Map contenant les infos utilisateur
+     * ✅ NOUVELLE VERSION : Utilise l'endpoint public /validate-role
+     * Cet endpoint accepte les tokens de n'importe quel utilisateur authentifié
      */
-    public Map<String, Object> getUserById(Long userId, String authToken) {
-        try {
-            log.debug("Fetching user info for userId: {}", userId);
+    public UserResponse validateUserRole(Long userId, String expectedRole, String authToken) {
+        String fullUrl = userServiceUrl + "/api/users/validate-role/" + userId + "?expectedRole=" + expectedRole;
 
-            return restClient.get()
-                    .uri(userServiceUrl + "/api/users/" + userId)
+        try {
+            log.info("🔍 Validating user role via public endpoint: userId={}, expectedRole={}", userId, expectedRole);
+            log.debug("🌐 Calling: {}", fullUrl);
+
+            UserResponse user = restClient.get()
+                    .uri(fullUrl)
                     .header("Authorization", "Bearer " + authToken)
                     .retrieve()
-                    .body(Map.class);
+                    .body(UserResponse.class);
+
+            if (user == null) {
+                log.error("❌ User-service returned NULL for userId: {}", userId);
+                return null;
+            }
+
+            log.info("✅ User {} validated successfully with role '{}'", userId, user.getRole());
+            return user;
+
+        } catch (RestClientResponseException e) {
+            // Gérer spécifiquement les erreurs HTTP
+            if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
+                log.warn("❌ User {} does NOT have role '{}'", userId, expectedRole);
+                return null; // Role mismatch
+            } else if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                log.warn("❌ User {} not found", userId);
+                return null;
+            } else {
+                log.error("❌ HTTP {} error validating user role: {}",
+                        e.getStatusCode().value(), e.getMessage());
+                throw new RuntimeException("Erreur lors de la validation du rôle utilisateur: " + e.getMessage(), e);
+            }
+        } catch (RestClientException e) {
+            log.error("❌ REST call failed to user-service");
+            log.error("   URL: {}", fullUrl);
+            log.error("   Error: {}", e.getMessage(), e);
+            throw new RuntimeException("Impossible de contacter user-service: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Récupère un utilisateur par son ID (utilise aussi l'endpoint public)
+     */
+    public UserResponse getUserById(Long userId, String authToken) {
+        String fullUrl = userServiceUrl + "/api/users/validate-role/" + userId;
+
+        try {
+            log.debug("🌐 Fetching user: {}", fullUrl);
+
+            UserResponse user = restClient.get()
+                    .uri(fullUrl)
+                    .header("Authorization", "Bearer " + authToken)
+                    .retrieve()
+                    .body(UserResponse.class);
+
+            if (user == null) {
+                log.error("❌ User-service returned NULL for userId: {}", userId);
+                return null;
+            }
+
+            log.debug("✅ User fetched: id={}, email={}, role='{}'",
+                    user.getId(), user.getEmail(), user.getRole());
+            return user;
 
         } catch (RestClientException e) {
-            log.error("Error fetching user info for userId: {}", userId, e);
+            log.error("❌ Error fetching user {}: {}", userId, e.getMessage());
             return null;
         }
     }
 
-    /**
-     * Vérifie si un utilisateur existe et a un rôle spécifique
-     * @param userId ID de l'utilisateur
-     * @param role Rôle attendu (DOCTORANT, DIRECTEUR, etc.)
-     * @param authToken Token JWT
-     * @return true si l'utilisateur existe avec ce rôle
-     */
-    public boolean validateUserRole(Long userId, String role, String authToken) {
-        try {
-            Map<String, Object> user = getUserById(userId, authToken);
-            if (user == null) {
-                return false;
-            }
-
-            Object roles = user.get("roles");
-            if (roles instanceof java.util.List) {
-                return ((java.util.List<?>) roles).contains(role);
-            }
-
-            return false;
-        } catch (Exception e) {
-            log.error("Error validating user role for userId: {}", userId, e);
-            return false;
-        }
-    }
-
-    /**
-     * Récupère l'email d'un utilisateur
-     * @param userId ID de l'utilisateur
-     * @param authToken Token JWT
-     * @return Email de l'utilisateur ou null
-     */
     public String getUserEmail(Long userId, String authToken) {
         try {
-            Map<String, Object> user = getUserById(userId, authToken);
-            return user != null ? (String) user.get("email") : null;
+            UserResponse user = getUserById(userId, authToken);
+            return user != null ? user.getEmail() : null;
         } catch (Exception e) {
             log.error("Error fetching user email for userId: {}", userId, e);
             return null;
         }
     }
 
-    /**
-     * Récupère le nom complet d'un utilisateur
-     * @param userId ID de l'utilisateur
-     * @param authToken Token JWT
-     * @return Nom complet ou null
-     */
     public String getUserFullName(Long userId, String authToken) {
         try {
-            Map<String, Object> user = getUserById(userId, authToken);
+            UserResponse user = getUserById(userId, authToken);
+
             if (user == null) {
                 return null;
             }
 
-            String firstName = (String) user.get("firstName");
-            String lastName = (String) user.get("lastName");
-
-            return (firstName != null && lastName != null)
-                    ? firstName + " " + lastName
+            return (user.getPrenom() != null && user.getNom() != null)
+                    ? user.getPrenom() + " " + user.getNom()
                     : null;
 
         } catch (Exception e) {

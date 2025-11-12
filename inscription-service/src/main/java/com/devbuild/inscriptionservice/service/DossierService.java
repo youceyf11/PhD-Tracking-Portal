@@ -4,6 +4,7 @@ package com.devbuild.inscriptionservice.service;
 import com.devbuild.inscriptionservice.client.UserServiceClient;
 import com.devbuild.inscriptionservice.domain.dto.request.DossierSubmissionRequest;
 import com.devbuild.inscriptionservice.domain.dto.response.DossierResponse;
+import com.devbuild.inscriptionservice.domain.dto.response.UserResponse;
 import com.devbuild.inscriptionservice.domain.entity.Campagne;
 import com.devbuild.inscriptionservice.domain.entity.Document;
 import com.devbuild.inscriptionservice.domain.entity.DossierInscription;
@@ -40,7 +41,7 @@ public class DossierService {
     @Transactional
     public DossierResponse submitDossier(DossierSubmissionRequest request,
                                          Map<TypeDocument, MultipartFile> files,
-                                         Long doctorantId) {
+                                         Long doctorantId,String authToken) {
 
         // Validate campagne is active
         Campagne campagne = campagneService.getCampagneEntityById(request.getCampagneId());
@@ -54,28 +55,92 @@ public class DossierService {
                     );
                 });
 
-        // Determine if this is a reenrollment
         boolean isReenrollment = Boolean.TRUE.equals(request.getIsReenrollment());
         LocalDateTime initialInscriptionDate;
+        DossierInscription previousDossier = null;
 
         if (isReenrollment) {
-            // Get the initial inscription date from the first dossier
-            DossierInscription initialDossier = dossierRepository
-                    .findInitialInscriptionByDoctorantId(doctorantId)
+            // Validate previousDossierId is provided
+            if (request.getPreviousDossierId() == null) {
+                throw new IllegalArgumentException(
+                        "L'ID du dossier précédent est requis pour une réinscription"
+                );
+            }
+
+            // Get the previous dossier
+            previousDossier = dossierRepository.findById(request.getPreviousDossierId())
                     .orElseThrow(() -> new ResourceNotFoundException(
-                            "Aucune inscription initiale trouvée pour la réinscription"
+                            "Dossier précédent introuvable avec l'ID: " + request.getPreviousDossierId()
                     ));
-            initialInscriptionDate = initialDossier.getInitialInscriptionDate();
+
+            // Verify it belongs to the same doctorant
+            if (!previousDossier.getDoctorantId().equals(doctorantId)) {
+                throw new IllegalArgumentException(
+                        "Le dossier précédent n'appartient pas à ce doctorant"
+                );
+            }
+
+            initialInscriptionDate = previousDossier.getInitialInscriptionDate();
+
+            long anneesDepuisInscription = java.time.temporal.ChronoUnit.YEARS.between(
+                    initialInscriptionDate.toLocalDate(),
+                    LocalDateTime.now().toLocalDate()
+            );
+
+            log.info("Réinscription - Dossier précédent: id={}, initial date={}, durée: {} ans",
+                    previousDossier.getId(), initialInscriptionDate, anneesDepuisInscription);
+
+            if (anneesDepuisInscription > 3) {
+                String derogation = previousDossier.getDerogation();
+                if (derogation == null || derogation.trim().isEmpty()) {
+                    throw new IllegalArgumentException(
+                            String.format(
+                                    "La durée maximale de la thèse (3 ans) est dépassée (%d ans). " +
+                                            "Une dérogation est requise pour poursuivre l'inscription.",
+                                    anneesDepuisInscription
+                            )
+                    );
+                }
+                log.info("Dérogation trouvée - Durée: {} ans, Motif: {}",
+                        anneesDepuisInscription, derogation);
+            }
         } else {
             initialInscriptionDate = LocalDateTime.now();
         }
 
-        // Create dossier
+        // Determine actual values to use (new or from previous dossier)
+        String sujetThese = isReenrollment &&
+                (request.getSujetThese() == null || request.getSujetThese().trim().isEmpty())
+                ? previousDossier.getSujetThese()
+                : request.getSujetThese();
+
+        Long directeurId = isReenrollment && request.getDirecteurId() == null
+                ? previousDossier.getDirecteurId()
+                : request.getDirecteurId();
+
+        UserResponse directeur = userServiceClient.validateUserRole(request.getDirecteurId(), "DIRECTEUR", authToken);
+        if (directeur == null) {
+            throw new IllegalArgumentException(
+                    "Le directeur spécifié n'existe pas ou n'a pas le rôle DIRECTEUR"
+            );
+        }
+        log.info("Directeur validé: {} {} ({})",
+                directeur.getPrenom(),
+                directeur.getNom(),
+                directeur.getEmail());
+
+
+        String collaboration = isReenrollment &&
+                (request.getCollaboration() == null || request.getCollaboration().trim().isEmpty())
+                ? previousDossier.getCollaboration()
+                : request.getCollaboration();
+
+        // Create new dossier
         DossierInscription dossier = DossierInscription.builder()
                 .doctorantId(doctorantId)
-                .sujetThese(request.getSujetThese())
-                .directeurId(request.getDirecteurId())
-                .collaboration(request.getCollaboration())
+                .sujetThese(sujetThese)
+                .directeurId(directeurId)
+                .collaboration(collaboration)
                 .statut(StatutDossier.EN_ATTENTE_DIRECTEUR)
                 .dateSubmission(LocalDateTime.now())
                 .initialInscriptionDate(initialInscriptionDate)
@@ -85,14 +150,51 @@ public class DossierService {
                 .build();
 
         DossierInscription savedDossier = dossierRepository.save(dossier);
-        log.info("Dossier created: id={}, doctorantId={}", savedDossier.getId(), doctorantId);
+        log.info("Dossier created: id={}, doctorantId={}, isReenrollment={}",
+                savedDossier.getId(), doctorantId, isReenrollment);
 
-        // Save files
-        if (files != null && !files.isEmpty()) {
-            for (Map.Entry<TypeDocument, MultipartFile> entry : files.entrySet()) {
-                MultipartFile file = entry.getValue();
-                if (file != null && !file.isEmpty()) {
-                    saveDocument(savedDossier, entry.getKey(), file);
+        // Handle documents
+        if (isReenrollment && previousDossier != null) {
+            // Copy documents from previous dossier if not provided
+            for (Document previousDoc : previousDossier.getDocuments()) {
+                TypeDocument docType = previousDoc.getTypeDocument();
+
+                // If file is provided for this type, use the new one
+                if (files != null && files.containsKey(docType)) {
+                    MultipartFile file = files.get(docType);
+                    if (file != null && !file.isEmpty()) {
+                        saveDocument(savedDossier, docType, file);
+                    } else {
+                        copyDocument(previousDoc, savedDossier);
+                    }
+                } else {
+                    copyDocument(previousDoc, savedDossier);
+                }
+            }
+
+            // Add any new document types that weren't in the previous dossier
+            if (files != null) {
+                for (Map.Entry<TypeDocument, MultipartFile> entry : files.entrySet()) {
+                    TypeDocument docType = entry.getKey();
+                    boolean existsInPrevious = previousDossier.getDocuments().stream()
+                            .anyMatch(doc -> doc.getTypeDocument() == docType);
+
+                    if (!existsInPrevious) {
+                        MultipartFile file = entry.getValue();
+                        if (file != null && !file.isEmpty()) {
+                            saveDocument(savedDossier, docType, file);
+                        }
+                    }
+                }
+            }
+        } else {
+            // First inscription - save all provided files
+            if (files != null && !files.isEmpty()) {
+                for (Map.Entry<TypeDocument, MultipartFile> entry : files.entrySet()) {
+                    MultipartFile file = entry.getValue();
+                    if (file != null && !file.isEmpty()) {
+                        saveDocument(savedDossier, entry.getKey(), file);
+                    }
                 }
             }
         }
@@ -101,13 +203,27 @@ public class DossierService {
         DossierStatusChangedEvent event = DossierStatusChangedEvent.forSubmission(
                 savedDossier.getId(),
                 doctorantId,
-                request.getDirecteurId(),
-                request.getSujetThese()
+                directeurId,
+                sujetThese
         );
         eventProducer.sendDossierEvent(event);
 
         return DossierResponse.fromEntity(savedDossier);
     }
+
+    private void copyDocument(Document sourceDoc, DossierInscription targetDossier) {
+        Document copiedDoc = Document.builder()
+                .nomFichier(sourceDoc.getNomFichier())
+                .cheminFichier(sourceDoc.getCheminFichier())
+                .typeDocument(sourceDoc.getTypeDocument())
+                .mimeType(sourceDoc.getMimeType())
+                .tailleFichier(sourceDoc.getTailleFichier())
+                .dossier(targetDossier)
+                .build();
+
+        targetDossier.addDocument(copiedDoc);
+    }
+
 
     private void saveDocument(DossierInscription dossier, TypeDocument typeDocument, MultipartFile file) {
         try {

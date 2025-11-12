@@ -111,15 +111,3 @@ public class GlobalExceptionHandler {
     }
 }
 
-// Custom Exceptions
-class UserNotFoundException extends RuntimeException {
-    public UserNotFoundException(String message) {
-        super(message);
-    }
-}
-
-class UserAlreadyExistsException extends RuntimeException {
-    public UserAlreadyExistsException(String message) {
-        super(message);
-    }
-}
