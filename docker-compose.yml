@@ -95,6 +95,8 @@ services:
       SPRING_CLOUD_CONFIG_SERVER_GIT_SEARCH_PATHS: config-repo
       SPRING_CLOUD_CONFIG_SERVER_GIT_CLONE_ON_START: "true"
       SPRING_CLOUD_CONFIG_SERVER_GIT_FORCE_PULL: "true"
+      SPRING_CLOUD_CONFIG_SERVER_GIT_BASEDIR: /config-repo-cache
+      SPRING_CLOUD_CONFIG_SERVER_GIT_TIMEOUT: 120
     ports:
       - "8888:8888"
     networks:
@@ -104,7 +106,7 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
-      start_period: 60s
+      start_period: 120s
     restart: unless-stopped
     volumes:
       - config-server-git-cache:/config-repo-cache
@@ -117,6 +119,21 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SPRING_CLOUD_CONFIG_URI: http://config-server:8888
+      EUREKA_INSTANCE_HOSTNAME: eureka-server
+      LOGGING_LEVEL_ROOT: DEBUG
+      SERVER_PORT: 8761
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK: DEBUG
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_CONFIG: TRACE
+      SPRING_OUTPUT_ANSI_ENABLED: ALWAYS
+      SPRING_CLOUD_CONFIG_FAIL_FAST: "false"
+      SPRING_CLOUD_CONFIG_RETRY_MAX_ATTEMPTS: 30
+      SPRING_CLOUD_CONFIG_RETRY_INITIAL_INTERVAL: 3000
+      SPRING_CLOUD_CONFIG_RETRY_MULTIPLIER: 1.3
+      SPRING_CLOUD_CONFIG_RETRY_MAX_INTERVAL: 10000
+      EUREKA_CLIENT_REGISTER_WITH_EUREKA: "false"
+      EUREKA_CLIENT_FETCH_REGISTRY: "false"
+
     ports:
       - "8761:8761"
     networks:
