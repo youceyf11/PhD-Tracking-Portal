@@ -4,8 +4,11 @@ networks:
 
 volumes:
   postgres-data:
+  zookeeper-data:
+  config-server-git-cache:
 
 services:
+
   postgres:
     image: postgres:15-alpine
     container_name: phd-postgres
@@ -17,6 +20,9 @@ services:
       - "5432:5432"
     networks:
       - phd-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -24,43 +30,93 @@ services:
       retries: 5
     restart: unless-stopped
 
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: phd-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+    networks:
+      - phd-network
+    healthcheck:
+      test: [ "CMD-SHELL", "echo srvr | nc localhost 2181 | grep Mode" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: always
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: phd-kafka
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "9092:9092"
+    networks:
+      - phd-network
+    healthcheck:
+      test: [ "CMD-SHELL", "kafka-broker-api-versions --bootstrap-server localhost:9092" ]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # ==========================================
+  # MICROSERVICES CORE (Config & Discovery)
+  # ==========================================
+
   config-server:
     build:
       context: ./config-server
       dockerfile: Dockerfile
-    container_name: phd-config-server
+    container_name: config-server
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SERVER_PORT: 8888
+      # Ensure this URI matches your actual GitHub Repo
       SPRING_CLOUD_CONFIG_SERVER_GIT_URI: https://github.com/youceyf11/Phd-Tracking-Portal-config-repo.git
       SPRING_CLOUD_CONFIG_SERVER_GIT_DEFAULT_LABEL: main
       SPRING_CLOUD_CONFIG_SERVER_GIT_SEARCH_PATHS: config-repo
+      SPRING_CLOUD_CONFIG_SERVER_GIT_CLONE_ON_START: "true"
+      SPRING_CLOUD_CONFIG_SERVER_GIT_FORCE_PULL: "true"
     ports:
       - "8888:8888"
     networks:
       - phd-network
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8888/actuator/health || exit 1"]
-      interval: 15s
-      timeout: 5s
+      interval: 10s
+      timeout: 10s
       retries: 10
       start_period: 60s
     restart: unless-stopped
+    volumes:
+      - config-server-git-cache:/config-repo-cache
 
-  # === Eureka Server ===
   eureka-server:
     build:
       context: ./eureka-server
       dockerfile: Dockerfile
-    container_name: phd-eureka-server
+    container_name: eureka-server
     environment:
       SPRING_PROFILES_ACTIVE: docker
       SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
-      EUREKA_INSTANCE_HOSTNAME: eureka-server
-      LOGGING_LEVEL_ROOT: DEBUG
-      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK: DEBUG
-      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_CONFIG: TRACE
-      SPRING_OUTPUT_ANSI_ENABLED: ALWAYS
     ports:
       - "8761:8761"
     networks:
@@ -80,13 +136,13 @@ services:
     build:
       context: ./api-gateway
       dockerfile: Dockerfile
-    container_name: phd-api-gateway
+    container_name: api-gateway
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
-      EUREKA_INSTANCE_HOSTNAME: api-gateway
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      # CRITICAL: Needed for secure startup
+      JWT_SECRET: ${JWT_SECRET}
     ports:
       - "8080:8080"
     networks:
@@ -104,26 +160,26 @@ services:
       start_period: 60s
     restart: unless-stopped
 
+  # ==========================================
+  # BUSINESS LOGIC SERVICES
+  # ==========================================
+
   user-service:
     build:
       context: ./user-service
       dockerfile: Dockerfile
-    container_name: phd-user-service
+    container_name: user-service
     environment:
       SPRING_PROFILES_ACTIVE: docker
-      EUREKA_INSTANCE_HOSTNAME: user-service
-      EUREKA_INSTANCE_PREFER_IP_ADDRESS: "false"
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/phd_tracking
       SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
-      JWT_SECRET: tRomhJ1bWYx/2GRhM3gXFcH4MO48su12vBaEhYU0dG+EWoEXJb2uIh4i5WqTI2FCRiyCuuq2yT/CRL+0Oh2Ehw==
-      JWT_EXPIRATION: ${JWT_EXPIRATION}
-      JWT_REFRESH_EXPIRATION: ${JWT_REFRESH_EXPIRATION}
-
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JWT_SECRET: ${JWT_SECRET}
     env_file:
       - .env
-
     ports:
       - "8081:8081"
     networks:
@@ -135,8 +191,127 @@ services:
         condition: service_healthy
       postgres:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8081/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 20s
+      retries: 10
+      start_period: 120s
+    restart: unless-stopped
+
+  inscription-service:
+    build:
+      context: ./inscription-service
+      dockerfile: Dockerfile
+    container_name: inscription-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/inscription_db
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # Path inside container
+      DOSSIER_STORAGE_PATH: /uploads/dossiers
+      JWT_SECRET: ${JWT_SECRET}
+    env_file:
+      - .env
+    ports:
+      - "8082:8082"
+    networks:
+      - phd-network
+    volumes:
+      - ./uploads:/uploads
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8082/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
+  soutenance-service:
+    build:
+      context: ./soutenance-service
+      dockerfile: Dockerfile
+    container_name: soutenance-service
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/soutenance_db
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      JWT_SECRET: ${JWT_SECRET}
+    env_file:
+      - .env
+    ports:
+      - "8083:8083"
+    networks:
+      - phd-network
+    volumes:
+      # Map host folder ./uploads to container /uploads
+      - ./uploads:/uploads
+    depends_on:
+      config-server:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      user-service:
+        condition: service_healthy
+      inscription-service:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8083/actuator/health || exit 1" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./notification-service
+      dockerfile: Dockerfile
+    container_name: notification-service
+    env_file:
+      - .env
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_CONFIG_IMPORT: configserver:http://config-server:8888
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # Mail credentials injected from .env
+      MAIL_USERNAME: ${GMAIL_USERNAME}
+      MAIL_PASSWORD: ${GMAIL_PASSWORD}
+    networks:
+      - phd-network
+    depends_on:
+      kafka:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -f http://localhost:8084/actuator/health || exit 1" ]
       interval: 30s
       timeout: 10s
       retries: 5
