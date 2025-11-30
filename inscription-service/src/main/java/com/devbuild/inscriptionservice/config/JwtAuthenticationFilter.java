@@ -1,7 +1,5 @@
 package com.devbuild.inscriptionservice.config;
 
-import org.springframework.web.filter.OncePerRequestFilter;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -16,10 +14,12 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,65 +35,64 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
 
+        String authHeader = request.getHeader("Authorization");
+
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
-            String authHeader = request.getHeader("Authorization");
+            String token = authHeader.substring(7);
+            SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
 
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                String token = authHeader.substring(7);
+            Claims claims = Jwts.parser()
+                    .verifyWith(key)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
 
-                // Valider le token avec la même clé que user-service
-                SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
+            // 1. Extract User ID (Handles Integer or String)
+            String userId = String.valueOf(claims.get("userId"));
+            String email = claims.getSubject();
 
-                Claims claims = Jwts.parser()
-                        .verifyWith(key)
-                        .build()
-                        .parseSignedClaims(token)
-                        .getPayload();
+            // 2. Extract Roles (Handles "role" String OR "roles" List)
+            List<String> rawRoles = new ArrayList<>();
 
-                // Extraire userId (maintenant String dans le JWT)
-                String userId = claims.get("userId", String.class);
-
-                // Extraire email
-                String email = claims.getSubject();
-
-                // Extraire roles (maintenant List<String> dans le JWT)
-                @SuppressWarnings("unchecked")
-                List<String> roles = claims.get("roles", List.class);
-
-                if (userId != null && roles != null && !roles.isEmpty()) {
-                    // Convertir les rôles en authorities Spring Security
-                    List<SimpleGrantedAuthority> authorities = roles.stream()
-                            .map(role -> {
-                                // Ajouter "ROLE_" si pas déjà présent
-                                String roleStr = role.startsWith("ROLE_") ? role : "ROLE_" + role;
-                                return new SimpleGrantedAuthority(roleStr);
-                            })
-                            .collect(Collectors.toList());
-
-                    // Créer l'authentication avec userId comme principal
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(userId, null, authorities);
-
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-                    // Définir l'authentification dans le SecurityContext
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                    log.debug("JWT validated successfully - User: {} | Email: {} | Roles: {}",
-                            userId, email, roles);
-                } else {
-                    log.warn("JWT validation failed - Missing required claims: userId={}, roles={}",
-                            userId, roles);
-                }
+            // Check for "roles" (List)
+            if (claims.get("roles") instanceof List) {
+                rawRoles.addAll((List<String>) claims.get("roles"));
             }
-        } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            log.error("JWT token is expired: {}", e.getMessage());
-        } catch (io.jsonwebtoken.security.SignatureException e) {
-            log.error("JWT signature validation failed: {}", e.getMessage());
-        } catch (io.jsonwebtoken.MalformedJwtException e) {
-            log.error("JWT token is malformed: {}", e.getMessage());
+            // Check for "role" (String) - THIS IS YOUR CURRENT CASE
+            else if (claims.get("role") instanceof String) {
+                rawRoles.add((String) claims.get("role"));
+            }
+
+            if (!rawRoles.isEmpty()) {
+                // 3. Normalize Roles (Add ROLE_ prefix if missing)
+                List<SimpleGrantedAuthority> authorities = rawRoles.stream()
+                        .map(r -> {
+                            String roleName = r.toUpperCase();
+                            if (!roleName.startsWith("ROLE_")) {
+                                roleName = "ROLE_" + roleName;
+                            }
+                            return new SimpleGrantedAuthority(roleName);
+                        })
+                        .collect(Collectors.toList());
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(userId, null, authorities);
+
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                log.debug("User Authenticated: {} with roles {}", email, authorities);
+            } else {
+                log.warn("Token valid but NO roles found for user: {}", email);
+            }
+
         } catch (Exception e) {
-            log.error("Cannot validate JWT token: {}", e.getMessage());
+            log.error("Could not set user authentication: {}", e.getMessage());
         }
 
         filterChain.doFilter(request, response);
@@ -101,10 +100,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // Ne pas filtrer les endpoints publics
         String path = request.getRequestURI();
-        return path.startsWith("/actuator/health") ||
-                path.startsWith("/actuator/info") ||
-                path.equals("/error");
+        return path.startsWith("/actuator/") || path.equals("/error");
     }
 }

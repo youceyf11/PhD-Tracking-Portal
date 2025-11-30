@@ -4,7 +4,6 @@ import com.devbuild.inscriptionservice.domain.dto.response.UserResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
@@ -15,82 +14,27 @@ import org.springframework.web.client.RestClientResponseException;
 @Slf4j
 public class UserServiceClient {
 
-    @Value("${services.user-service.url:http://user-service:8081}")
-    private String userServiceUrl;
 
-    private final RestClient restClient;
+    private final UserServiceFeignClient userServiceFeignClient;
 
-    /**
-     * ✅ NOUVELLE VERSION : Utilise l'endpoint public /validate-role
-     * Cet endpoint accepte les tokens de n'importe quel utilisateur authentifié
-     */
     public UserResponse validateUserRole(Long userId, String expectedRole, String authToken) {
-        String fullUrl = userServiceUrl + "/api/users/validate-role/" + userId + "?expectedRole=" + expectedRole;
-
+        // Note: Auth token is handled by the interceptor; no need to pass it explicitly
         try {
-            log.info("🔍 Validating user role via public endpoint: userId={}, expectedRole={}", userId, expectedRole);
-            log.debug("🌐 Calling: {}", fullUrl);
-
-            UserResponse user = restClient.get()
-                    .uri(fullUrl)
-                    .header("Authorization", "Bearer " + authToken)
-                    .retrieve()
-                    .body(UserResponse.class);
-
-            if (user == null) {
-                log.error("❌ User-service returned NULL for userId: {}", userId);
-                return null;
-            }
-
-            log.info("✅ User {} validated successfully with role '{}'", userId, user.getRole());
-            return user;
-
-        } catch (RestClientResponseException e) {
-            // Gérer spécifiquement les erreurs HTTP
-            if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
-                log.warn("❌ User {} does NOT have role '{}'", userId, expectedRole);
-                return null; // Role mismatch
-            } else if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
-                log.warn("❌ User {} not found", userId);
-                return null;
-            } else {
-                log.error("❌ HTTP {} error validating user role: {}",
-                        e.getStatusCode().value(), e.getMessage());
-                throw new RuntimeException("Erreur lors de la validation du rôle utilisateur: " + e.getMessage(), e);
-            }
-        } catch (RestClientException e) {
-            log.error("❌ REST call failed to user-service");
-            log.error("   URL: {}", fullUrl);
-            log.error("   Error: {}", e.getMessage(), e);
-            throw new RuntimeException("Impossible de contacter user-service: " + e.getMessage(), e);
+            log.info("🔍 Validating user role via Feign: userId={}, expectedRole={}", userId, expectedRole);
+            return userServiceFeignClient.validateUserRole(userId, expectedRole);
+        } catch (Exception e) {
+            // Handle exceptions as before (e.g., 404, 403)
+            log.error("Call to User Service failed", e);
+            throw new RuntimeException("Service Utilisateur indisponible");
         }
     }
 
-    /**
-     * Récupère un utilisateur par son ID (utilise aussi l'endpoint public)
-     */
     public UserResponse getUserById(Long userId, String authToken) {
-        String fullUrl = userServiceUrl + "/api/users/validate-role/" + userId;
-
+        // Note: Auth token is handled by the interceptor
         try {
-            log.debug("🌐 Fetching user: {}", fullUrl);
-
-            UserResponse user = restClient.get()
-                    .uri(fullUrl)
-                    .header("Authorization", "Bearer " + authToken)
-                    .retrieve()
-                    .body(UserResponse.class);
-
-            if (user == null) {
-                log.error("❌ User-service returned NULL for userId: {}", userId);
-                return null;
-            }
-
-            log.debug("✅ User fetched: id={}, email={}, role='{}'",
-                    user.getId(), user.getEmail(), user.getRole());
-            return user;
-
-        } catch (RestClientException e) {
+            log.debug("🌐 Fetching user via Feign: {}", userId);
+            return userServiceFeignClient.getUserById(userId);
+        } catch (Exception e) {
             log.error("❌ Error fetching user {}: {}", userId, e.getMessage());
             return null;
         }
