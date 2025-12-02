@@ -2,10 +2,7 @@ package com.devbuild.inscriptionservice.domain.entity;
 
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import com.devbuild.inscriptionservice.domain.enums.TypeDocument;
@@ -35,12 +32,13 @@ public class Document {
     @Column(nullable = false, length = 50)
     private TypeDocument typeDocument;
 
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 250)
     private String mimeType;
 
     @Column(nullable = false)
     private Long tailleFichier;
 
+    @ToString.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "dossier_id", nullable = false)
     private DossierInscription dossier;

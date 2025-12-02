@@ -43,7 +43,7 @@ public class DossierService {
     @Transactional
     public DossierResponse submitDossier(DossierSubmissionRequest request,
                                          Map<TypeDocument, MultipartFile> files,
-                                         Long doctorantId,String authToken) {
+                                         Long doctorantId) {
 
         // Validate campagne is active
         Campagne campagne = campagneService.getCampagneEntityById(request.getCampagneId());
@@ -120,7 +120,7 @@ public class DossierService {
                 ? previousDossier.getDirecteurId()
                 : request.getDirecteurId();
 
-        UserResponse directeur = userServiceClient.validateUserRole(request.getDirecteurId(), "DIRECTEUR", authToken);
+        UserResponse directeur = userServiceClient.validateUserRole(request.getDirecteurId(), "DIRECTEUR");
         if (directeur == null) {
             throw new IllegalArgumentException(
                     "Le directeur spécifié n'existe pas ou n'a pas le rôle DIRECTEUR"
@@ -272,8 +272,8 @@ public class DossierService {
 
         // Enrichir avec les infos du doctorant
         try {
-            String doctorantNom = userServiceClient.getUserFullName(dossier.getDoctorantId(), authToken);
-            String doctorantEmail = userServiceClient.getUserEmail(dossier.getDoctorantId(), authToken);
+            String doctorantNom = userServiceClient.getUserFullName(dossier.getDoctorantId());
+            String doctorantEmail = userServiceClient.getUserEmail(dossier.getDoctorantId());
             response.setDoctorantNom(doctorantNom);
             response.setDoctorantEmail(doctorantEmail);
         } catch (Exception e) {
@@ -282,8 +282,8 @@ public class DossierService {
 
         // Enrichir avec les infos du directeur
         try {
-            String directeurNom = userServiceClient.getUserFullName(dossier.getDirecteurId(), authToken);
-            String directeurEmail = userServiceClient.getUserEmail(dossier.getDirecteurId(), authToken);
+            String directeurNom = userServiceClient.getUserFullName(dossier.getDirecteurId());
+            String directeurEmail = userServiceClient.getUserEmail(dossier.getDirecteurId());
             response.setDirecteurNom(directeurNom);
             response.setDirecteurEmail(directeurEmail);
         } catch (Exception e) {

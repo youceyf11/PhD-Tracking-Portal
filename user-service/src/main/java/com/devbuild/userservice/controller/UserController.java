@@ -5,9 +5,12 @@ import com.devbuild.userservice.dto.UserRequest;
 import com.devbuild.userservice.dto.UserResponse;
 import com.devbuild.userservice.entity.User;
 import com.devbuild.userservice.enums.Role;
+import com.devbuild.userservice.exception.ResourceNotFoundException;
+import com.devbuild.userservice.repository.UserRepository;
 import com.devbuild.userservice.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -18,12 +21,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
 public class UserController {
 
     private final UserService userService;
+    private final UserRepository userRepository;
 
     @PostMapping("/register")
     public ResponseEntity<UserResponse> registerUser(@Valid @RequestBody UserRequest request) {
@@ -88,6 +93,41 @@ public class UserController {
 
         User updatedUser = userService.updateUser(currentUser);
         return ResponseEntity.ok(UserResponse.fromEntity(updatedUser));
+    }
+
+
+    @GetMapping("/validate-role/{userId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponse> validateUserRole(
+            @PathVariable Long userId,
+            @RequestParam(required = false) String expectedRole) {
+
+        log.info("Validating user role: userId={}, expectedRole={}", userId, expectedRole);
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+
+        // If a role is specified, check if it matches
+        if (expectedRole != null && !expectedRole.isEmpty()) {
+            // Check if roles match (ignoring case)
+            if (!user.getRole().name().equalsIgnoreCase(expectedRole)) {
+                log.warn("Role mismatch: User {} has {}, expected {}", userId, user.getRole(), expectedRole);
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+            }
+        }
+
+        return ResponseEntity.ok(UserResponse.fromEntity(user));
+    }
+
+
+    @GetMapping("/id/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
+        log.debug("Fetching user by ID: {}", id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + id));
+
+        return ResponseEntity.ok(UserResponse.fromEntity(user));
     }
 
 }

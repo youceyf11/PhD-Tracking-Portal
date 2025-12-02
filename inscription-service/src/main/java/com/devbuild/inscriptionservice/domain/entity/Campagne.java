@@ -2,10 +2,7 @@ package com.devbuild.inscriptionservice.domain.entity;
 
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import jakarta.persistence.Id;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -47,6 +44,7 @@ public class Campagne {
     @Builder.Default
     private Boolean active = false;
 
+    @ToString.Exclude
     @OneToMany(mappedBy = "campagne", cascade = CascadeType.ALL)
     @Builder.Default
     private List<DossierInscription> dossiers = new ArrayList<>();

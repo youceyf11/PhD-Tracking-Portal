@@ -30,6 +30,10 @@ public class NotificationListener {
     @KafkaListener(topics = "dossier-status-changed", groupId = "notification-group")
     public void handleDossierEvent(DossierStatusChangedEvent event) {
         log.info("Event received: Dossier {} changed to {}", event.getDossierId(), event.getNouveauStatut());
+        log.info("DEBUG MAPPING: ID={} | Statut={} | Sujet={}",
+                event.getDossierId(),
+                event.getNouveauStatut(),
+                event.getSujetThese());
 
         // Fetch User Info
         UserResponse user = userServiceClient.getUserById(event.getDoctorantId());

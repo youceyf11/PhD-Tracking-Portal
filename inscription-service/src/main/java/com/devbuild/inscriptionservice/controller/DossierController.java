@@ -60,7 +60,7 @@ public class DossierController {
             if (autre != null) files.put(TypeDocument.AUTRE, autre);
 
             String token= authHeader.substring((7));
-            DossierResponse response = dossierService.submitDossier(request, files, doctorantId, token);
+            DossierResponse response = dossierService.submitDossier(request, files, doctorantId);
 
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(ApiResponse.success("Dossier soumis avec succès", response));

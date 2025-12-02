@@ -1,4 +1,5 @@
 package com.devbuild.inscriptionservice.exception;
+
 import com.devbuild.inscriptionservice.domain.dto.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,7 +16,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 @Slf4j
-public class GlobalExceptionHandler extends RuntimeException {
+public class GlobalExceptionHandler {
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(ResourceNotFoundException ex) {
         log.error("Resource not found: {}", ex.getMessage());
@@ -110,9 +112,16 @@ public class GlobalExceptionHandler extends RuntimeException {
                 .body(ApiResponse.error("La taille du fichier dépasse la limite autorisée"));
     }
 
+    /**
+     * Handles any other unhandled exception.
+     * CRITICAL: This logs the full stack trace to the console/Docker logs.
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
-        log.error("Unexpected error", ex);
+        // Log the full stack trace!
+        log.error("❌ CRITICAL UNHANDLED EXCEPTION ❌", ex);
+
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiResponse.error("Une erreur inattendue s'est produite: " + ex.getMessage()));
-    }}
+    }
+}
