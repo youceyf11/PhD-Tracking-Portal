@@ -1,0 +1,200 @@
+2025-12-02T13:17:40.003Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:40.167Z ERROR 1 --- [notification-service] [ntainer#0-0-C-1] o.a.k.c.c.internals.CompletedFetch       : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Value Deserializers with error: Deserializers{keyDeserializer=org.apache.kafka.common.serialization.StringDeserializer@7d06ee78, valueDeserializer=org.springframework.kafka.support.serializer.JsonDeserializer@430ba545}
+2025-12-02T13:17:40.167Z ERROR 1 --- [notification-service] [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : Consumer exception
+
+java.lang.IllegalStateException: This error handler cannot process 'SerializationException's directly; please consider configuring an 'ErrorHandlingDeserializer' in the value and/or key deserializer
+	at org.springframework.kafka.listener.DefaultErrorHandler.handleOtherException(DefaultErrorHandler.java:192) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.handleConsumerException(KafkaMessageListenerContainer.java:1992) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.run(KafkaMessageListenerContainer.java:1387) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+Caused by: org.apache.kafka.common.errors.RecordDeserializationException: Error deserializing VALUE for partition dossier-status-changed-0 at offset 0. If needed, please seek past the record to continue consumption.
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.newRecordDeserializationException(CompletedFetch.java:346) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.parseRecord(CompletedFetch.java:330) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.fetchRecords(CompletedFetch.java:284) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.FetchCollector.fetchRecords(FetchCollector.java:169) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.FetchCollector.collectFetch(FetchCollector.java:135) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.Fetcher.collectFetch(Fetcher.java:146) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.ClassicKafkaConsumer.pollForFetches(ClassicKafkaConsumer.java:672) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.ClassicKafkaConsumer.poll(ClassicKafkaConsumer.java:623) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.ClassicKafkaConsumer.poll(ClassicKafkaConsumer.java:596) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.KafkaConsumer.poll(KafkaConsumer.java:874) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.pollConsumer(KafkaMessageListenerContainer.java:1692) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.doPoll(KafkaMessageListenerContainer.java:1667) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.pollAndInvoke(KafkaMessageListenerContainer.java:1445) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.run(KafkaMessageListenerContainer.java:1335) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	... 2 common frames omitted
+Caused by: java.lang.IllegalStateException: No type information in headers and no default type provided
+	at org.springframework.util.Assert.state(Assert.java:79) ~[spring-core-6.2.12.jar!/:6.2.12]
+	at org.springframework.kafka.support.serializer.JsonDeserializer.deserialize(JsonDeserializer.java:598) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.apache.kafka.common.serialization.Deserializer.deserialize(Deserializer.java:81) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.parseRecord(CompletedFetch.java:327) ~[kafka-clients-3.9.1.jar!/:na]
+	... 14 common frames omitted
+
+2025-12-02T13:17:40.870Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:40.870Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:40.870Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:40.870Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:41.903Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:41.904Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:41.920Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:41.920Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:42.890Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:42.890Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:42.922Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:42.922Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:43.714Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:43.715Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:43.951Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:43.951Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:44.683Z  WARN 1 --- [notification-service] [nio-8084-exec-7] o.s.b.a.system.DiskSpaceHealthIndicator  : Free disk space at path '/app/.' below threshold. Available: 0 bytes (threshold: 10485760B)
+2025-12-02T13:17:44.742Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:44.743Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:44.976Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:44.985Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:45.173Z ERROR 1 --- [notification-service] [ntainer#0-0-C-1] o.a.k.c.c.internals.CompletedFetch       : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Value Deserializers with error: Deserializers{keyDeserializer=org.apache.kafka.common.serialization.StringDeserializer@7d06ee78, valueDeserializer=org.springframework.kafka.support.serializer.JsonDeserializer@430ba545}
+2025-12-02T13:17:45.175Z ERROR 1 --- [notification-service] [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : Consumer exception
+
+java.lang.IllegalStateException: This error handler cannot process 'SerializationException's directly; please consider configuring an 'ErrorHandlingDeserializer' in the value and/or key deserializer
+	at org.springframework.kafka.listener.DefaultErrorHandler.handleOtherException(DefaultErrorHandler.java:192) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.handleConsumerException(KafkaMessageListenerContainer.java:1992) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.run(KafkaMessageListenerContainer.java:1387) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+Caused by: org.apache.kafka.common.errors.RecordDeserializationException: Error deserializing VALUE for partition dossier-status-changed-0 at offset 0. If needed, please seek past the record to continue consumption.
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.newRecordDeserializationException(CompletedFetch.java:346) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.parseRecord(CompletedFetch.java:330) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.fetchRecords(CompletedFetch.java:284) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.FetchCollector.fetchRecords(FetchCollector.java:169) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.FetchCollector.collectFetch(FetchCollector.java:135) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.Fetcher.collectFetch(Fetcher.java:146) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.ClassicKafkaConsumer.pollForFetches(ClassicKafkaConsumer.java:672) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.ClassicKafkaConsumer.poll(ClassicKafkaConsumer.java:623) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.ClassicKafkaConsumer.poll(ClassicKafkaConsumer.java:596) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.KafkaConsumer.poll(KafkaConsumer.java:874) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.pollConsumer(KafkaMessageListenerContainer.java:1692) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.doPoll(KafkaMessageListenerContainer.java:1667) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.pollAndInvoke(KafkaMessageListenerContainer.java:1445) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.run(KafkaMessageListenerContainer.java:1335) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	... 2 common frames omitted
+Caused by: java.lang.IllegalStateException: No type information in headers and no default type provided
+	at org.springframework.util.Assert.state(Assert.java:79) ~[spring-core-6.2.12.jar!/:6.2.12]
+	at org.springframework.kafka.support.serializer.JsonDeserializer.deserialize(JsonDeserializer.java:598) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.apache.kafka.common.serialization.Deserializer.deserialize(Deserializer.java:81) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.parseRecord(CompletedFetch.java:327) ~[kafka-clients-3.9.1.jar!/:na]
+	... 14 common frames omitted
+
+2025-12-02T13:17:45.746Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:45.746Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:45.977Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:45.978Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:46.748Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:46.748Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:46.969Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:46.969Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:47.744Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:47.746Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:48.009Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:48.009Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:48.748Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:48.748Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:49.020Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:49.020Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:49.758Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:49.758Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:50.063Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:50.063Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:50.182Z ERROR 1 --- [notification-service] [ntainer#0-0-C-1] o.a.k.c.c.internals.CompletedFetch       : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Value Deserializers with error: Deserializers{keyDeserializer=org.apache.kafka.common.serialization.StringDeserializer@7d06ee78, valueDeserializer=org.springframework.kafka.support.serializer.JsonDeserializer@430ba545}
+2025-12-02T13:17:50.182Z ERROR 1 --- [notification-service] [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : Consumer exception
+
+java.lang.IllegalStateException: This error handler cannot process 'SerializationException's directly; please consider configuring an 'ErrorHandlingDeserializer' in the value and/or key deserializer
+	at org.springframework.kafka.listener.DefaultErrorHandler.handleOtherException(DefaultErrorHandler.java:192) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.handleConsumerException(KafkaMessageListenerContainer.java:1992) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.run(KafkaMessageListenerContainer.java:1387) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+Caused by: org.apache.kafka.common.errors.RecordDeserializationException: Error deserializing VALUE for partition dossier-status-changed-0 at offset 0. If needed, please seek past the record to continue consumption.
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.newRecordDeserializationException(CompletedFetch.java:346) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.parseRecord(CompletedFetch.java:330) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.fetchRecords(CompletedFetch.java:284) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.FetchCollector.fetchRecords(FetchCollector.java:169) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.FetchCollector.collectFetch(FetchCollector.java:135) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.Fetcher.collectFetch(Fetcher.java:146) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.ClassicKafkaConsumer.pollForFetches(ClassicKafkaConsumer.java:672) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.ClassicKafkaConsumer.poll(ClassicKafkaConsumer.java:623) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.ClassicKafkaConsumer.poll(ClassicKafkaConsumer.java:596) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.KafkaConsumer.poll(KafkaConsumer.java:874) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.pollConsumer(KafkaMessageListenerContainer.java:1692) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.doPoll(KafkaMessageListenerContainer.java:1667) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.pollAndInvoke(KafkaMessageListenerContainer.java:1445) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.run(KafkaMessageListenerContainer.java:1335) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	... 2 common frames omitted
+Caused by: java.lang.IllegalStateException: No type information in headers and no default type provided
+	at org.springframework.util.Assert.state(Assert.java:79) ~[spring-core-6.2.12.jar!/:6.2.12]
+	at org.springframework.kafka.support.serializer.JsonDeserializer.deserialize(JsonDeserializer.java:598) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.apache.kafka.common.serialization.Deserializer.deserialize(Deserializer.java:81) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.parseRecord(CompletedFetch.java:327) ~[kafka-clients-3.9.1.jar!/:na]
+	... 14 common frames omitted
+
+2025-12-02T13:17:50.693Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:50.694Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:50.985Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:50.985Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:51.810Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:51.810Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:52.001Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:52.001Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:52.850Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:52.850Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:53.050Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:53.050Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:53.825Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:53.826Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:54.051Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:54.051Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:54.671Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:54.671Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:55.053Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:55.053Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:55.186Z ERROR 1 --- [notification-service] [ntainer#0-0-C-1] o.a.k.c.c.internals.CompletedFetch       : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Value Deserializers with error: Deserializers{keyDeserializer=org.apache.kafka.common.serialization.StringDeserializer@7d06ee78, valueDeserializer=org.springframework.kafka.support.serializer.JsonDeserializer@430ba545}
+2025-12-02T13:17:55.186Z ERROR 1 --- [notification-service] [ntainer#0-0-C-1] o.s.k.l.KafkaMessageListenerContainer    : Consumer exception
+
+java.lang.IllegalStateException: This error handler cannot process 'SerializationException's directly; please consider configuring an 'ErrorHandlingDeserializer' in the value and/or key deserializer
+	at org.springframework.kafka.listener.DefaultErrorHandler.handleOtherException(DefaultErrorHandler.java:192) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.handleConsumerException(KafkaMessageListenerContainer.java:1992) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.run(KafkaMessageListenerContainer.java:1387) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at java.base/java.util.concurrent.CompletableFuture$AsyncRun.run(CompletableFuture.java:1804) ~[na:na]
+	at java.base/java.lang.Thread.run(Thread.java:1583) ~[na:na]
+Caused by: org.apache.kafka.common.errors.RecordDeserializationException: Error deserializing VALUE for partition dossier-status-changed-0 at offset 0. If needed, please seek past the record to continue consumption.
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.newRecordDeserializationException(CompletedFetch.java:346) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.parseRecord(CompletedFetch.java:330) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.fetchRecords(CompletedFetch.java:284) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.FetchCollector.fetchRecords(FetchCollector.java:169) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.FetchCollector.collectFetch(FetchCollector.java:135) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.Fetcher.collectFetch(Fetcher.java:146) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.ClassicKafkaConsumer.pollForFetches(ClassicKafkaConsumer.java:672) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.ClassicKafkaConsumer.poll(ClassicKafkaConsumer.java:623) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.ClassicKafkaConsumer.poll(ClassicKafkaConsumer.java:596) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.KafkaConsumer.poll(KafkaConsumer.java:874) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.pollConsumer(KafkaMessageListenerContainer.java:1692) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.doPoll(KafkaMessageListenerContainer.java:1667) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.pollAndInvoke(KafkaMessageListenerContainer.java:1445) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.springframework.kafka.listener.KafkaMessageListenerContainer$ListenerConsumer.run(KafkaMessageListenerContainer.java:1335) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	... 2 common frames omitted
+Caused by: java.lang.IllegalStateException: No type information in headers and no default type provided
+	at org.springframework.util.Assert.state(Assert.java:79) ~[spring-core-6.2.12.jar!/:6.2.12]
+	at org.springframework.kafka.support.serializer.JsonDeserializer.deserialize(JsonDeserializer.java:598) ~[spring-kafka-3.3.10.jar!/:3.3.10]
+	at org.apache.kafka.common.serialization.Deserializer.deserialize(Deserializer.java:81) ~[kafka-clients-3.9.1.jar!/:na]
+	at org.apache.kafka.clients.consumer.internals.CompletedFetch.parseRecord(CompletedFetch.java:327) ~[kafka-clients-3.9.1.jar!/:na]
+	... 14 common frames omitted
+
+2025-12-02T13:17:55.617Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:55.618Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:56.054Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:56.054Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:56.674Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:56.675Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:57.056Z  INFO 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:57.056Z  WARN 1 --- [notification-service] [ntainer#1-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-2, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.
+2025-12-02T13:17:57.596Z  INFO 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Node 1 disconnected.
+2025-12-02T13:17:57.596Z  WARN 1 --- [notification-service] [ntainer#0-0-C-1] org.apache.kafka.clients.NetworkClient   : [Consumer clientId=consumer-notification-group-1, groupId=notification-group] Connection to node 1 (kafka/172.20.0.4:29092) could not be established. Node may not be available.

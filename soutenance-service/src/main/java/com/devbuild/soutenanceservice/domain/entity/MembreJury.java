@@ -25,5 +25,7 @@ public class MembreJury {
 
     @ManyToOne
     @JoinColumn(name = "jury_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Jury jury;
 }

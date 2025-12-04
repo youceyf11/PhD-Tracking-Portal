@@ -97,7 +97,6 @@ public class UserController {
 
 
     @GetMapping("/validate-role/{userId}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserResponse> validateUserRole(
             @PathVariable Long userId,
             @RequestParam(required = false) String expectedRole) {
@@ -121,7 +120,6 @@ public class UserController {
 
 
     @GetMapping("/id/{id}")
-    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         log.debug("Fetching user by ID: {}", id);
         User user = userRepository.findById(id)

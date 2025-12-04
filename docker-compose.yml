@@ -231,7 +231,6 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
       SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
-      # Path inside container
       DOSSIER_STORAGE_PATH: /uploads/dossiers
       JWT_SECRET: ${JWT_SECRET}
     env_file:

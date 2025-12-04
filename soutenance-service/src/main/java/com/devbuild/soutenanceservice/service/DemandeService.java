@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -105,5 +106,35 @@ public class DemandeService {
         response.setCreatedAt(demande.getCreatedAt());
         response.setUpdatedAt(demande.getUpdatedAt());
         return response;
+    }
+
+
+
+    public List<DemandeResponse> getAllDemandes() {
+        return repository.findAll().stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<DemandeResponse> getDemandesByDoctorant(Long doctorantId) {
+        return repository.findByDoctorantId(doctorantId).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void validerPrerequis(Long demandeId) {
+        DemandeSoutenance demande = repository.findById(demandeId)
+                .orElseThrow(() -> new RuntimeException("Demande introuvable"));
+
+        // Vérification de cohérence
+        if (demande.getStatut() != StatutDemande.EN_ATTENTE_PREREQUIS) {
+            throw new IllegalStateException("Impossible de valider : statut incorrect");
+        }
+
+        // Passage à l'étape suivante
+        demande.setStatut(StatutDemande.EN_ATTENTE_JURY);
+        repository.save(demande);
+
     }
 }

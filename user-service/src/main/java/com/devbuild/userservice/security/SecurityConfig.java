@@ -48,6 +48,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/users/{id}/role").hasRole("ADMIN")
                         .requestMatchers("/api/users/{id}/desactivate").hasRole("ADMIN")
                         .requestMatchers("/api/users", "/api/users/{email}").hasAnyRole("ADMIN", "DIRECTEUR")
+                        .requestMatchers("/api/users/validate-role/**").permitAll()
+                        .requestMatchers("/api/users/id/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(exception -> exception

@@ -22,5 +22,7 @@ public class Rapport {
 
     @ManyToOne
     @JoinColumn(name = "demande_id")
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private DemandeSoutenance demandeSoutenance;
 }

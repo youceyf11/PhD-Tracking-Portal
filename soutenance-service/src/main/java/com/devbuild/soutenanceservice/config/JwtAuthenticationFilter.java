@@ -10,7 +10,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -20,6 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -49,38 +49,69 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         .parseSignedClaims(token)
                         .getPayload();
 
-                String userId = claims.get("userId", String.class);
+                // 1. Extract UserId safely (Handle Integer vs String)
+                String userId = null;
+                Object userIdClaim = claims.get("userId");
+                if (userIdClaim != null) {
+                    userId = String.valueOf(userIdClaim);
+                }
 
                 String email = claims.getSubject();
 
-                // Extraire roles (maintenant List<String> dans le JWT)
-                @SuppressWarnings("unchecked")
-                List<String> roles = claims.get("roles", List.class);
+                // 2. Robust Role Extraction (The Fix)
+                List<String> roles = null;
 
+                // Attempt A: Try standard "roles" (List)
+                try {
+                    roles = claims.get("roles", List.class);
+                } catch (Exception e) {
+                    // Ignore, try next method
+                }
+
+                // Attempt B: Try singular "role" (String) -> Fix for your specific token
+                if (roles == null) {
+                    try {
+                        String singleRole = claims.get("role", String.class);
+                        if (singleRole != null) {
+                            roles = Collections.singletonList(singleRole);
+                        }
+                    } catch (Exception e) {
+                        // Ignore
+                    }
+                }
+
+                // Attempt C: Try "authorities" (Common in Spring Security)
+                if (roles == null) {
+                    try {
+                        roles = claims.get("authorities", List.class);
+                    } catch (Exception e) {
+                        // Ignore
+                    }
+                }
+
+                // 3. Create Authentication
                 if (userId != null && roles != null && !roles.isEmpty()) {
-                    // Convertir les rôles en authorities Spring Security
+                    // Convert roles to Spring Security authorities
                     List<SimpleGrantedAuthority> authorities = roles.stream()
                             .map(role -> {
-                                // Ajouter "ROLE_" si pas déjà présent
+                                // Add "ROLE_" prefix if missing
                                 String roleStr = role.startsWith("ROLE_") ? role : "ROLE_" + role;
                                 return new SimpleGrantedAuthority(roleStr);
                             })
                             .collect(Collectors.toList());
 
-                    // Créer l'authentication avec userId comme principal
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(userId, null, authorities);
 
                     authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                    // Définir l'authentification dans le SecurityContext
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
-                    log.debug("JWT validated successfully - User: {} | Email: {} | Roles: {}",
-                            userId, email, roles);
+                    log.debug("JWT validated successfully - User: {} | Roles: {}", userId, roles);
                 } else {
-                    log.warn("JWT validation failed - Missing required claims: userId={}, roles={}",
-                            userId, roles);
+                    // Log ALL claims to help debug if it fails again
+                    log.warn("JWT validation failed - userId={}, roles={}. Full Claims: {}",
+                            userId, roles, claims);
                 }
             }
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
@@ -98,7 +129,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        // Ne pas filtrer les endpoints publics
         String path = request.getRequestURI();
         return path.startsWith("/actuator/health") ||
                 path.startsWith("/actuator/info") ||

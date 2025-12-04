@@ -1,6 +1,7 @@
 package com.devbuild.soutenanceservice.controller;
 
 import com.devbuild.soutenanceservice.domain.dto.request.RapportUploadRequest;
+import com.devbuild.soutenanceservice.domain.dto.response.ApiResponse;
 import com.devbuild.soutenanceservice.service.RapportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +18,8 @@ public class RapportController {
 
     @PostMapping("/{demandeId}/rapport")
     @PreAuthorize("hasRole('DIRECTEUR')")
-    public ResponseEntity<Void> uploadRapport(@PathVariable Long demandeId, @RequestPart("rapport") MultipartFile rapport, @RequestBody RapportUploadRequest request) {
+    public ResponseEntity<ApiResponse<Void>> uploadRapport(@PathVariable Long demandeId, @RequestPart("rapport") MultipartFile rapport, @RequestPart("request") RapportUploadRequest request) {
         service.uploadRapport(demandeId, rapport, request.isFavorable());
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(ApiResponse.success("Rapport déposé avec succès", null));
     }
 }

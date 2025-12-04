@@ -1,6 +1,5 @@
 package com.devbuild.inscriptionservice.kafka.producer;
 
-
 import com.devbuild.inscriptionservice.kafka.event.DossierStatusChangedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -8,11 +7,11 @@ import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 
 @Component
 @Slf4j
 public class DossierEventProducer {
-
 
     private static final String TOPIC = "dossier-status-changed";
 
@@ -26,18 +25,18 @@ public class DossierEventProducer {
         log.info("Sending dossier event to Kafka: dossierId={}, eventType={}",
                 event.getDossierId(), event.getEventType());
 
-        CompletableFuture<SendResult<String, DossierStatusChangedEvent>> future =
-                kafkaTemplate.send(TOPIC, String.valueOf(event.getDossierId()), event);
+        try {
+            // 🛑 FORCE SYNCHRONOUS SEND 🛑
+            // .get() forces the code to wait until Kafka says "Received!"
+            // If Kafka is down, this throws an Exception immediately.
+            kafkaTemplate.send(TOPIC, String.valueOf(event.getDossierId()), event).get();
 
-        future.whenComplete((result, ex) -> {
-            if (ex == null) {
-                log.info("Successfully sent dossier event: dossierId={}, offset={}",
-                        event.getDossierId(),
-                        result.getRecordMetadata().offset());
-            } else {
-                log.error("Failed to send dossier event: dossierId={}",
-                        event.getDossierId(), ex);
-            }
-        });
+            log.info("✅ Successfully sent dossier event: dossierId={}", event.getDossierId());
+
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("❌ Error sending message to Kafka", e);
+            // Throwing RuntimeException triggers @Transactional rollback in ValidationService
+            throw new RuntimeException("Failed to send Kafka event", e);
+        }
     }
 }
